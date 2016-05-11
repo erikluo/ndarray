@@ -462,11 +462,12 @@ type poseValue struct {
 	value float64
 }
 
-//如果self的shape == that的shape，则对应元素的值相加。
-//如果that是列向量(shape为[n, 1])，则self中的第i行每个元素加上that第i个元素的值。
-//如果that是行向量(shape为[1, n]), 则self中的第j列每个元素加上that第j个元素的值。
-//如果that数据个数为1，则该值被加到self的所有值上，返回与self一样大小的nd.
+//if self's shape == that's shape，then bit wise addition will be token;
+//if that's size is 1, then all elements of self will be added by the element of that;
+//if self's shape is [m, n] and that's shape is [m, 1]，then the elements in ith row of self will be added by the ith element of that;
+//if self's shape is [m, n] and that's shape is [1, n]，then the elements in jth col of self will be added by the jth element of that;
 func (self *NdArray) Add(that *NdArray) *NdArray {
+	//equal shape, bit wise addition
 	if EqualOfIntSlice(self.shape, that.shape) {
 		tn := Zeros(self.shape...)
 		for i := range tn.data {
@@ -476,6 +477,17 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 		return tn
 	}
 
+	//that's size is 1, scale addition
+	if ProductOfIntSlice(that.shape) == 1 {
+		tn := self.Clone()
+		for i := range tn.data {
+			tn.data[i] = tn.data[i] + that.Get(0)
+		}
+
+		return tn
+	}
+
+	// self' shape [m, n], that's shape [m, 1]
 	if len(that.shape) == 2 && that.shape[1] == 1 && len(self.shape) == 2 && self.shape[0] == that.shape[0] {
 		tn := Zeros(self.shape...)
 		for i := 0; i < tn.Rows(); i++ {
@@ -487,21 +499,13 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 		return tn
 	}
 
+	// self's shape [m, n], that's shape [1, n]
 	if len(that.shape) == 2 && that.shape[0] == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[1] {
 		tn := Zeros(self.shape...)
 		for i := 0; i < tn.Rows(); i++ {
 			for j := 0; j < tn.Cols(); j++ {
 				tn.Set(self.Get(i, j)+that.Get(j), i, j)
 			}
-		}
-
-		return tn
-	}
-
-	if ProductOfIntSlice(that.shape) == 1 {
-		tn := self.Clone()
-		for i := range tn.data {
-			tn.data[i] = tn.data[i] + that.Get(0)
 		}
 
 		return tn
