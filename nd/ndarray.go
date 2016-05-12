@@ -736,3 +736,7 @@ func (self *NdArray) GetEles(is ...int) *NdArray {
 func (self *NdArray) Values() []float64 {
 	return self.data
 }
+
+func (self *NdArray) Flat() *NdArray {
+	return Ravel(self)
+}

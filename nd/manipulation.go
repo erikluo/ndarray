@@ -1,8 +1,6 @@
 package nd
 
-import (
-	"math"
-)
+import "math"
 
 func Exp(A *NdArray) *NdArray {
 	tn := Zeros(A.shape...)
@@ -49,6 +47,82 @@ func NonZero(A *NdArray) [][]int {
 		}
 
 		return [][]int{rowIndexs, colIndexs}
+	}
+
+	panic("shape error")
+}
+
+//Copies values from one array to another.
+//Raises a "src shape != dst shape" panic if the src shape != dst shape.
+func CopyTo(src *NdArray, dst *NdArray) {
+	if !EqualOfIntSlice(src.shape, dst.shape) {
+		panic("src shape != dst shape")
+	}
+	copy(dst.data, src.data)
+}
+
+//Return a contiguous ﬂattened 1-d array.
+//A 1-D array,containing the elements of the input, is returned. A copy is made.
+func Ravel(a *NdArray) *NdArray {
+	data := make([]float64, len(a.data))
+	copy(data, a.data)
+
+	return &NdArray{
+		shape: []int{len(data)},
+		data:  data,
+	}
+}
+
+//View inputs as arrays with at least two dimensions.
+func Atleast2D(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		return a.Reshape(a.shape[0], 1)
+	} else {
+		return a
+	}
+}
+
+//View inputs as arrays with at least three dimensions.
+func Atleast3D(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		return a.Reshape(a.shape[0], 1, 1)
+	} else if len(a.shape) == 2 {
+		return a.Reshape(a.shape[0], a.shape[1], 1)
+	} else {
+		return a
+	}
+}
+
+//if a's shape is [m],
+//    then the mean of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the mean of each row will be returned in a ndarray;
+func Mean(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		sum := 0.0
+		for _, v := range a.data {
+			sum += v
+		}
+		mean := sum / float64(len(a.data))
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{mean},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		means := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			sum := 0.0
+			for j := 0; j < a.Cols(); j++ {
+				sum += a.Get(i, j)
+			}
+			means[i] = sum / float64(a.Cols())
+		}
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  means,
+		}
 	}
 
 	panic("shape error")

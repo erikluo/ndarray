@@ -51,3 +51,75 @@ func TestNonZero(t *testing.T) {
 		t.Error("Expected [0,1,2,2], got ", index[1])
 	}
 }
+
+func TestCopyTo(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+	b := Zeros(2, 2)
+
+	CopyTo(a, b)
+
+	a.Set(10, 0)
+
+	if !b.Equals(Arange(4).Reshape(2, 2)) {
+		t.Error("Expected [[0,1],[2,3]], got ", b)
+	}
+
+	defer func() {
+		res := recover()
+		if res != "src shape != dst shape" {
+			t.Error("Expected 'src shape != dst shape', got ", res)
+		}
+	}()
+
+	b = Zeros(4)
+	CopyTo(a, b)
+}
+
+func TestRavel(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+	b := Ravel(a)
+	a.Set(10, 0)
+
+	if !b.Equals(Arange(4)) {
+		t.Error("Expected [0,1,2,3], got ", b)
+	}
+}
+
+func TestAtleast2D(t *testing.T) {
+	a := Arange(4)
+	b := Atleast2D(a)
+
+	if !b.Equals(Arange(4).Reshape(4, 1)) {
+		t.Error("Expected [[0,1,2,3]], got ", b)
+	}
+
+	b = Atleast2D(a.Reshape(2, 2))
+
+	if !b.Equals(Arange(4).Reshape(2, 2)) {
+		t.Error("Expected [[0,1],[2,3]], got ", b)
+	}
+}
+
+func TestAtleast3D(t *testing.T) {
+	a := Arange(4)
+	b := Atleast3D(a)
+
+	if !b.Equals(Arange(4).Reshape(4, 1, 1)) {
+		t.Error("Expected [[[0,1,2,3]]], got ", b)
+	}
+
+	b = Atleast3D(a.Reshape(2, 2))
+
+	if !b.Equals(Arange(4).Reshape(2, 2, 1)) {
+		t.Error("Expected [[[0,1],[2,3]]], got ", b)
+	}
+}
+
+func TestMean(t *testing.T) {
+	a := Arange(4)
+	mean := Mean(a).Get(0)
+
+	if mean != 1.5 {
+		t.Error("Expected   , got ", mean)
+	}
+}

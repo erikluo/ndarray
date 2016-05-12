@@ -546,3 +546,13 @@ func TestNdValues(t *testing.T) {
 		t.Error("Expected [0,1,2], got ", values)
 	}
 }
+
+func TestNdFlat(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+	b := a.Flat()
+	a.Set(10, 0)
+
+	if !b.Equals(Arange(4)) {
+		t.Error("Expected [[0,1],[2,3]], got ", b)
+	}
+}
