@@ -237,3 +237,81 @@ func Var(a *NdArray) *NdArray {
 
 	panic("shape error")
 }
+
+//if a's shape is [m],
+//    then the max value of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the max value of each row will be returned in a 1d array;
+func Max(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		max := math.Inf(-1)
+		for _, v := range a.data {
+			if v > max {
+				max = v
+			}
+		}
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{max},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		maxs := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			max := math.Inf(-1)
+			for j := 0; j < a.Cols(); j++ {
+				if a.Get(i, j) > max {
+					max = a.Get(i, j)
+				}
+			}
+			maxs[i] = max
+		}
+
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  maxs,
+		}
+	}
+
+	panic("shape error")
+}
+
+//if a's shape is [m],
+//    then the min value of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the min value of each row will be returned in a 1d array;
+func Min(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		min := math.Inf(1)
+		for _, v := range a.data {
+			if v < min {
+				min = v
+			}
+		}
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{min},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		mins := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			min := math.Inf(1)
+			for j := 0; j < a.Cols(); j++ {
+				if a.Get(i, j) < min {
+					min = a.Get(i, j)
+				}
+			}
+			mins[i] = min
+		}
+
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  mins,
+		}
+	}
+
+	panic("shape error")
+}

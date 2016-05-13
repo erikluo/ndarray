@@ -215,3 +215,53 @@ func TestVar(t *testing.T) {
 
 	Var(Arange(8).Reshape(2, 2, 2))
 }
+
+func TestMax(t *testing.T) {
+	a := Arange(4)
+	max := Max(a).Get(0)
+
+	if max != 3 {
+		t.Error("Expected 3, got ", max)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	maxs := Max(a)
+
+	if !maxs.Equals(Array(1, 3)) {
+		t.Error("Expected [1,3], got ", maxs)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	Max(Arange(8).Reshape(2, 2, 2))
+}
+
+func TestMin(t *testing.T) {
+	a := Arange(4)
+	min := Min(a).Get(0)
+
+	if min != 0 {
+		t.Error("Expected 0, got ", min)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	mins := Min(a)
+
+	if !mins.Equals(Array(0, 2)) {
+		t.Error("Expected [0,2], got ", mins)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	Min(Arange(8).Reshape(2, 2, 2))
+}
