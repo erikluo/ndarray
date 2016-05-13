@@ -120,6 +120,98 @@ func TestMean(t *testing.T) {
 	mean := Mean(a).Get(0)
 
 	if mean != 1.5 {
-		t.Error("Expected   , got ", mean)
+		t.Error("Expected 1.5, got ", mean)
 	}
+
+	a = Arange(4).Reshape(2, 2)
+	means := Mean(a)
+
+	if !means.Equals(Array(0.5, 2.5)) {
+		t.Error("Expected [0.5, 2.5], got ", means)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	a = Arange(8).Reshape(2, 2, 2)
+	Mean(a)
+}
+
+func TestSum(t *testing.T) {
+	a := Arange(4)
+	sum := Sum(a).Get(0)
+
+	if sum != 6 {
+		t.Error("Expected 6, got ", sum)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	sums := Sum(a)
+
+	if !sums.Equals(Array(1, 5)) {
+		t.Error("Expected [1, 5], got ", sums)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+	a = Arange(8).Reshape(2, 2, 2)
+	Sum(a)
+}
+
+func TestStd(t *testing.T) {
+	mat := Array(2, 3, 1, 4)
+	std := Std(mat).Get(0)
+
+	if std != 1.118033988749895 {
+		t.Error("expected 1.118033988749895, got ", std)
+	}
+
+	mat = mat.Reshape(2, 2)
+	stds := Std(mat)
+
+	if !stds.Equals(Array(0.5, 1.5)) {
+		t.Error("Expected [0.5, 1.5], got ", stds)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	Std(Arange(8).Reshape(2, 2, 2))
+}
+
+func TestVar(t *testing.T) {
+	mat := Array(2, 3, 1, 4)
+	vars := Var(mat).Get(0)
+
+	if vars != 1.25 {
+		t.Error("expected 1.25, got ", vars)
+	}
+
+	mat = mat.Reshape(2, 2)
+	vars_ := Var(mat)
+
+	if !vars_.Equals(Array(0.25, 2.25)) {
+		t.Error("Expected [0.25, 2.25], got ", vars_)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	Var(Arange(8).Reshape(2, 2, 2))
 }

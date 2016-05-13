@@ -96,7 +96,7 @@ func Atleast3D(a *NdArray) *NdArray {
 //if a's shape is [m],
 //    then the mean of all elements will be returned in a ndarray;
 //if a's shape is [m, n],
-//    then the mean of each row will be returned in a ndarray;
+//    then the mean of each row will be returned in a 1darray;
 func Mean(a *NdArray) *NdArray {
 	if len(a.shape) == 1 {
 		sum := 0.0
@@ -122,6 +122,116 @@ func Mean(a *NdArray) *NdArray {
 		return &NdArray{
 			shape: []int{a.Rows()},
 			data:  means,
+		}
+	}
+
+	panic("shape error")
+}
+
+//if a's shape is [m],
+//    then the sum of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the sum of each row will be returned in a 1d array;
+func Sum(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		sum := 0.0
+		for _, v := range a.data {
+			sum += v
+		}
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{sum},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		sums := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			sum := 0.0
+			for j := 0; j < a.Cols(); j++ {
+				sum += a.Get(i, j)
+			}
+			sums[i] = sum
+		}
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  sums,
+		}
+	}
+
+	panic("shape error")
+}
+
+//if a's shape is [m],
+//    then the std of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the std of each row will be returned in a 1d array;
+func Std(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		mean := Mean(a).Get(0)
+		sum := 0.0
+		for _, v := range a.data {
+			sum += (v - mean) * (v - mean)
+		}
+		std := math.Sqrt(sum / float64(len(a.data)))
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{std},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		stds := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			mean := Mean(a.NthRow(i)).Get(0)
+			sum := 0.0
+			for j := 0; j < a.Cols(); j++ {
+				sum += (a.Get(i, j) - mean) * (a.Get(i, j) - mean)
+			}
+
+			stds[i] = math.Sqrt(sum / float64(a.Cols()))
+		}
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  stds,
+		}
+	}
+
+	panic("shape error")
+}
+
+//if a's shape is [m],
+//    then the variance of all elements will be returned in a ndarray;
+//if a's shape is [m, n],
+//    then the variance of each row will be returned in a 1d array;
+func Var(a *NdArray) *NdArray {
+	if len(a.shape) == 1 {
+		mean := Mean(a).Get(0)
+		sum := 0.0
+		for _, v := range a.data {
+			sum += (v - mean) * (v - mean)
+		}
+		std := sum / float64(len(a.data))
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{std},
+		}
+	}
+
+	if len(a.shape) == 2 {
+		stds := make([]float64, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			mean := Mean(a.NthRow(i)).Get(0)
+			sum := 0.0
+			for j := 0; j < a.Cols(); j++ {
+				sum += (a.Get(i, j) - mean) * (a.Get(i, j) - mean)
+			}
+
+			stds[i] = sum / float64(a.Cols())
+		}
+		return &NdArray{
+			shape: []int{a.Rows()},
+			data:  stds,
 		}
 	}
 
