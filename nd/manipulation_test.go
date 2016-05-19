@@ -1,6 +1,7 @@
 package nd
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -264,4 +265,164 @@ func TestMin(t *testing.T) {
 	}()
 
 	Min(Arange(8).Reshape(2, 2, 2))
+}
+
+func TestVStack(t *testing.T) {
+	a := Arange(3)
+	b := Arange(6).Reshape(2, 3)
+	c := VStack(a, b)
+
+	if !c.Equals(Array(0, 1, 2, 0, 1, 2, 3, 4, 5).Reshape(3, 3)) {
+		t.Error("Expected [[0,1,2], [0,1,2], [3,4,5]], got ", c)
+	}
+
+	c = VStack()
+
+	if !c.Equals(Empty()) {
+		t.Error("Expected [], got ", c)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	VStack(a, b, Arange(4))
+}
+
+func TestHStack(t *testing.T) {
+	a := Arange(3)
+	b := Array(2, 3, 4, 1, 2, 3).Reshape(3, 2)
+	c := Arange(1, 4)
+	d := HStack(a, b, c)
+
+	if !d.Equals(Array(0, 2, 3, 1, 1, 4, 1, 2, 2, 2, 3, 3).Reshape(3, 4)) {
+		t.Error("Expected [[0,2,3,1],[1,4,1,2],[2,2,3,3]], got ", d)
+	}
+
+	d = HStack()
+
+	if !d.Equals(Empty()) {
+		t.Error("Expected [], got ", d)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	HStack(a, b, Arange(2))
+}
+
+func TestSort(t *testing.T) {
+	a := Array(3, 4, 2, 3, 1)
+
+	Sort(a)
+
+	if !a.Equals(Array(1, 2, 3, 3, 4)) {
+		t.Error("Expected [1,2,3,3,4], got ", a)
+	}
+
+	a = Array(3, 4, 5, 1, 3, 2).Reshape(2, 3)
+	Sort(a)
+
+	if !a.Equals(Array(3, 4, 5, 1, 2, 3).Reshape(2, 3)) {
+		t.Error("Expected [[3,4,5], [1,2,3]], got ", a)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+	a = Arange(8).Reshape(2, 2, 2)
+	Sort(a)
+}
+
+func TestHSplit(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+
+	b := HSplit(a)
+
+	if !b[0].Equals(Array(0, 1)) {
+		t.Error("Expected [0, 1], got ", b[0])
+	}
+
+	if !b[1].Equals(Array(2, 3)) {
+		t.Error("Expected [2,3], got ", b[1])
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+	a = Arange(3)
+	HSplit(a)
+}
+
+func TestVSplit(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+	b := VSplit(a)
+
+	if !b[0].Equals(Array(0, 2)) {
+		t.Error("Expected [0,2], got ", b[0])
+	}
+
+	if !b[1].Equals(Array(1, 3)) {
+		t.Error("Expected [1,3], got ", b[1])
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	a = Array(9)
+	VSplit(a)
+}
+
+func TestTile(t *testing.T) {
+	a := Arange(3)
+	b := Tile(a, 1, 1, 1, 1)
+
+	if !b.Equals(Array(0, 1, 2)) {
+		t.Error(fmt.Sprintf("Expected [0,1,2], got "), b)
+	}
+
+	b = Tile(a, 2)
+
+	if !b.Equals(Array(0, 1, 2, 0, 1, 2)) {
+		t.Error("Expected [0,1,2,0,1,2], got ", b)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	b = Tile(a, 2)
+
+	if !b.Equals(Array(0, 1, 0, 1, 2, 3, 2, 3).Reshape(2, 4)) {
+		t.Error("Expected [0,1,0,1,2,3,2,3], got ", b)
+	}
+
+	b = Tile(a, 2, 1)
+
+	if !b.Equals(Array(0, 1, 2, 3, 0, 1, 2, 3).Reshape(4, 2)) {
+		t.Error("Expected [0,1,0,1,2,3,2,3], got ", b)
+	}
+}
+
+func TestUnique(t *testing.T) {
+	a := Array(3, 4, 2, 3, 1, 2, 4, 3, 2)
+	us := Unique(a)
+
+	if !EqualOfFloat64Slice(us, []float64{1, 2, 3, 4}) {
+		t.Error("Expected [1,2,3,4], got ", us)
+	}
 }

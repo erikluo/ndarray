@@ -740,3 +740,15 @@ func (self *NdArray) Values() []float64 {
 func (self *NdArray) Flat() *NdArray {
 	return Ravel(self)
 }
+
+func (self *NdArray) IsEmpty() bool {
+	if len(self.shape) == 0 || len(self.data) == 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (self *NdArray) NDims() int {
+	return len(self.shape)
+}

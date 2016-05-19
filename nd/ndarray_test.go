@@ -556,3 +556,37 @@ func TestNdFlat(t *testing.T) {
 		t.Error("Expected [[0,1],[2,3]], got ", b)
 	}
 }
+
+func TestIsEmpty(t *testing.T) {
+	a := Arange(20)
+
+	if a.IsEmpty() {
+		t.Error("Expected false, got ", true)
+	}
+
+	a = Empty()
+
+	if !a.IsEmpty() {
+		t.Error("Expected true, got ", false)
+	}
+}
+
+func TestNdims(t *testing.T) {
+	a := Arange(4).Reshape(2, 2)
+
+	if a.NDims() != 2 {
+		t.Error("Expected 2, got ", a.NDims())
+	}
+
+	a = Arange(4)
+
+	if a.NDims() != 1 {
+		t.Error("Expected 1, got ", a.NDims())
+	}
+
+	a = Empty()
+
+	if a.NDims() != 0 {
+		t.Error("Expected 0, got ", a.NDims())
+	}
+}

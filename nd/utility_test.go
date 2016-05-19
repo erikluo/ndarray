@@ -46,3 +46,35 @@ func TestEqualOfFloat64Slice(t *testing.T) {
 		t.Error("Expected true, got false")
 	}
 }
+
+func TestAll(t *testing.T) {
+	b := []bool{true, true, true}
+	r := All(b...)
+
+	if r != true {
+		t.Error("Expected true, got ", r)
+	}
+
+	b = append(b, false)
+	r = All(b...)
+
+	if r != false {
+		t.Error("Expected false, got ", r)
+	}
+}
+
+func TestAny(t *testing.T) {
+	b := []bool{false, false}
+	r := Any(b...)
+
+	if r != false {
+		t.Error("Expected false, got ", r)
+	}
+
+	b = append(b, true)
+	r = Any(b...)
+
+	if r != true {
+		t.Error("Expected true, got ", false)
+	}
+}

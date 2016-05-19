@@ -46,3 +46,23 @@ func EqualOfFloat64Slice(a []float64, b []float64) bool {
 	}
 	return true
 }
+
+//Return true if all true, otherwise false.
+func All(bools ...bool) bool {
+	for _, v := range bools {
+		if v != true {
+			return false
+		}
+	}
+	return true
+}
+
+//Return true if any true, otherwise false.
+func Any(bools ...bool) bool {
+	for _, v := range bools {
+		if v == true {
+			return true
+		}
+	}
+	return false
+}

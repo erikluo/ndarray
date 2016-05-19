@@ -1,6 +1,9 @@
 package nd
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
 func Exp(A *NdArray) *NdArray {
 	tn := Zeros(A.shape...)
@@ -314,4 +317,210 @@ func Min(a *NdArray) *NdArray {
 	}
 
 	panic("shape error")
+}
+
+//Stack arrays in sequence vertically (rowwise).
+func VStack(nds ...*NdArray) *NdArray {
+	tn := Empty()
+	var col = 0
+	if len(nds) == 0 {
+		return Empty()
+	} else {
+
+		if len(nds[0].shape) == 1 {
+			col = nds[0].Rows()
+		} else {
+			col = nds[0].Cols()
+		}
+		for i := range nds {
+			if len(nds[i].shape) == 1 {
+				if col != nds[i].Rows() {
+					panic("shape error")
+				} else {
+					tn.PushEles(nds[i].data...)
+				}
+			} else if len(nds[i].shape) == 2 {
+				if col != nds[i].Cols() {
+					panic("shape error")
+				} else {
+					tn.PushEles(nds[i].data...)
+				}
+			} else {
+				panic("shape error")
+			}
+		}
+	}
+	rows := len(tn.data) / col
+
+	return tn.Reshape(rows, col)
+}
+
+//Stack arrays in sequence horizontally (columnwise)
+func HStack(nds ...*NdArray) *NdArray {
+	tn := Empty()
+	var row = 0
+	if len(nds) == 0 {
+		return Empty()
+	} else {
+		if nds[0].IsEmpty() {
+			panic("shape error")
+		}
+
+		row = nds[0].Rows()
+
+		for i := range nds {
+			if len(nds[i].shape) == 1 {
+				if row != nds[i].Rows() {
+					panic("shape error")
+				} else {
+					tn.PushEles(nds[i].data...)
+				}
+			} else if len(nds[i].shape) == 2 {
+				if row != nds[i].Rows() {
+					panic("shape error")
+				} else {
+					tn.PushEles(nds[i].T().data...)
+				}
+			} else {
+				panic("shape error")
+			}
+		}
+	}
+	col := len(tn.data) / row
+
+	return tn.Reshape(col, row).T()
+}
+
+//sort the ndarray
+func Sort(a *NdArray) *NdArray {
+	if a.NDims() == 1 {
+		sort.Float64s(a.data)
+		return a
+	} else if a.NDims() == 2 {
+		for i := 0; i < a.Rows(); i++ {
+			sort.Float64s(a.data[i*a.Cols() : (i+1)*a.Cols()])
+		}
+		return a
+	}
+
+	panic("shape error")
+}
+
+//Split an array into multiple sub-arrays horizontally(column-wise).
+func HSplit(a *NdArray) []*NdArray {
+	if a.NDims() == 2 {
+		nds := make([]*NdArray, a.Rows())
+		for i := range nds {
+			data := make([]float64, a.Cols())
+			copy(data, a.data[i*a.Cols():(i+1)*a.Cols()])
+			nds[i] = &NdArray{
+				shape: []int{a.Cols()},
+				data:  data,
+			}
+		}
+
+		return nds
+	}
+
+	panic("shape error")
+}
+
+//Split an array into multiple sub-arrays vertically(row-wise).
+func VSplit(a *NdArray) []*NdArray {
+	if a.NDims() == 2 {
+		nds := make([]*NdArray, a.Cols())
+		for j := range nds {
+			nds[j] = a.NthCol(j)
+		}
+		return nds
+	}
+
+	panic("shape error")
+}
+
+// Construct an array by repeating A the number of times given by reps.
+func Tile(a *NdArray, reps ...int) *NdArray {
+	if len(reps) == 0 {
+		return a.Clone()
+	}
+
+	d := len(reps)
+	if All(func() []bool {
+		bools := make([]bool, d)
+		for i := range bools {
+			if reps[i] == 1 {
+				bools[i] = true
+			} else {
+				bools[i] = false
+			}
+		}
+		return bools
+	}()...) {
+		return a.Clone()
+	}
+
+	if d == 1 {
+		if a.NDims() == 1 {
+			tn := Empty()
+			for r := 0; r < reps[0]; r++ {
+				tn.PushEles(a.data...)
+			}
+			return tn.Reshape(a.Size() * reps[0])
+		} else if a.NDims() == 2 {
+			tn := Zeros(a.Rows(), a.Cols()*reps[0])
+			for r := 0; r < reps[0]; r++ {
+				for i := 0; i < a.Rows(); i++ {
+					for j := 0; j < a.Cols(); j++ {
+						tn.Set(a.Get(i, j), i, j+r*reps[0])
+					}
+				}
+			}
+			return tn
+		} else {
+			panic("shape error")
+		}
+	}
+
+	if d == 2 {
+		if a.NDims() == 2 {
+			tn := Zeros(a.Rows()*reps[0], a.Cols()*reps[1])
+			for ri := 0; ri < reps[0]; ri++ {
+				for rj := 0; rj < reps[1]; rj++ {
+					for i := 0; i < a.Rows(); i++ {
+						for j := 0; j < a.Cols(); j++ {
+							tn.Set(a.Get(i, j), i+ri*a.Rows(), j+rj*a.Cols())
+						}
+					}
+				}
+			}
+			return tn
+		} else {
+			panic("shape error")
+		}
+	}
+
+	panic("shape error")
+}
+
+func Unique(a *NdArray) []float64 {
+	if a.IsEmpty() {
+		return []float64{}
+	}
+
+	uniqueEles := make([]float64, 0, a.Size())
+	for _, v := range a.data {
+		if func() bool {
+			for _, uv := range uniqueEles {
+				if v == uv {
+					return false
+				}
+			}
+			return true
+		}() {
+			uniqueEles = append(uniqueEles, v)
+		}
+	}
+
+	sort.Float64s(uniqueEles)
+	return uniqueEles
 }
