@@ -426,3 +426,74 @@ func TestUnique(t *testing.T) {
 		t.Error("Expected [1,2,3,4], got ", us)
 	}
 }
+
+func TestArgMax(t *testing.T) {
+	a := Arange(4)
+	maxIndex := ArgMax(a)[0]
+
+	if maxIndex != 3 {
+		t.Error("Expected 3, got ", maxIndex)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	maxIndexs := ArgMax(a)
+	if !EqualOfIntSlice(maxIndexs, []int{1, 1}) {
+		t.Error("Expected [1,1], got ", maxIndexs)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+
+	ArgMax(Empty())
+}
+
+func TestArgMin(t *testing.T) {
+	a := Arange(3)
+	minIndex := ArgMin(a)[0]
+
+	if minIndex != 0 {
+		t.Error("Expected 0, got ", minIndex)
+	}
+
+	a = Arange(4).Reshape(2, 2)
+	minIndexs := ArgMin(a)
+
+	if !EqualOfIntSlice(minIndexs, []int{0, 0}) {
+		t.Error("Expected [0,0], got ", minIndexs)
+	}
+}
+
+func TestExtract(t *testing.T) {
+	a := Array(3, -1, 4, -2)
+
+	es := Extract(a, func(ele float64) bool {
+		if ele > 0 {
+			return true
+		} else {
+			return false
+		}
+	})
+
+	if !es.Equals(Array(3, 4)) {
+		t.Error("Expected [3,4], got ", es)
+	}
+}
+
+func TestCountNonZero(t *testing.T) {
+	a := Array(0, 9, 3, 2, 0.000000003)
+	count := CountNonZero(a)
+
+	if count != 4 {
+		t.Error("Expected 4, got ", count)
+	}
+}
+
+func demo() {
+	a := Array(34)
+	a.Add(Array(2))
+	fmt.Println(a)
+}

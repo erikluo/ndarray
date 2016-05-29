@@ -524,3 +524,98 @@ func Unique(a *NdArray) []float64 {
 	sort.Float64s(uniqueEles)
 	return uniqueEles
 }
+
+//Returns the indices of the maximum values along an axis.
+func ArgMax(a *NdArray) []int {
+	if a.NDims() == 1 {
+		maxValue := math.Inf(-1)
+		maxIndex := -1
+		for i, v := range a.data {
+			if v > maxValue {
+				maxValue = v
+				maxIndex = i
+			}
+		}
+
+		return []int{maxIndex}
+	}
+
+	if a.NDims() == 2 {
+		maxIndexs := make([]int, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			maxValue := math.Inf(-1)
+			maxIndex := -1
+			for j := 0; j < a.Cols(); j++ {
+				if a.Get(i, j) > maxValue {
+					maxValue = a.Get(i, j)
+					maxIndex = j
+				}
+			}
+			maxIndexs[i] = maxIndex
+		}
+
+		return maxIndexs
+	}
+
+	panic("shape error")
+}
+
+//Returns the indices of the minimum values along an axis.
+func ArgMin(a *NdArray) []int {
+	if a.NDims() == 1 {
+		minValue := math.Inf(1)
+		minIndex := -1
+		for i, v := range a.data {
+			if v < minValue {
+				minValue = v
+				minIndex = i
+			}
+		}
+
+		return []int{minIndex}
+	}
+
+	if a.NDims() == 2 {
+		minIndexs := make([]int, a.Rows())
+		for i := 0; i < a.Rows(); i++ {
+			minValue := math.Inf(1)
+			minIndex := -1
+			for j := 0; j < a.Cols(); j++ {
+				if a.Get(i, j) < minValue {
+					minValue = a.Get(i, j)
+					minIndex = j
+				}
+			}
+			minIndexs[i] = minIndex
+		}
+
+		return minIndexs
+	}
+
+	panic("shape error")
+}
+
+//Returntheelementsofanarraythatsatisfysomecondition.
+func Extract(a *NdArray, condition func(ele float64) bool) *NdArray {
+	tn := Empty()
+	for _, v := range a.data {
+		if condition(v) {
+			tn.PushEles(v)
+		}
+	}
+	tn = tn.Reshape(len(tn.data))
+
+	return tn
+}
+
+//Counts the number of non-zero values in the array a.
+func CountNonZero(a *NdArray) int {
+	count := 0
+	for _, v := range a.data {
+		if math.Abs(v-1e-10) > 1e-10 {
+			count += 1
+		}
+	}
+
+	return count
+}

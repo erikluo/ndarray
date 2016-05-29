@@ -7,11 +7,7 @@ import (
 	"strings"
 )
 
-//多维数据，高维的值表示有多少个次一个维度的空间，以此类推。
-//数据以slice存储，索引也以（第一维位置, 第二维位置, 第三维位置, ...） 检索。
-//实现的String接口将第一维“横着”显示，第二维、第三维依次堆积，因此以二维结构来看，
-//第一维和第二维类似矩阵的行和列。
-//无论如何Reshape(),data数据的顺序没有发生变化，只是索引发生变化。
+//The same as numpy ndarray
 type NdArray struct {
 	shape []int
 	data  []float64
@@ -183,55 +179,6 @@ func (self *NdArray) Set(v float64, poses ...int) {
 	//        panic(fmt.Errorf("poses shape wrong. Need: %v, got %v ", self.shape, poses))
 	//    }
 	self.data[self.posInData(poses)] = v
-}
-
-func (self *NdArray) String() string {
-	var finalStr string
-	switch len(self.shape) {
-	case 3:
-		{
-			allBlocks := make([]string, 0, self.shape[2])
-			for d := 0; d < self.shape[2]; d++ {
-				allLines := make([]string, 0, self.shape[1])
-				for i := 0; i < self.shape[0]; i++ {
-					lineeles := make([]string, 0, self.shape[1])
-					for j := 0; j < self.shape[1]; j++ {
-						ele := self.Get(i, j, d)
-						lineeles = append(lineeles, strconv.FormatFloat(ele, 'f', -1, 32))
-					}
-					allLines = append(allLines, "["+strings.Join(lineeles, ", ")+"]")
-				}
-				allBlocks = append(allBlocks, "["+strings.Join(allLines, ",\n")+"]")
-			}
-			finalStr = "[" + strings.Join(allBlocks, ",\n") + "]"
-		}
-	case 2:
-		{
-			dataStr := make([]string, 0, self.shape[0])
-			for i := 0; i < self.shape[0]; i++ {
-				str := make([]string, 0, self.shape[1])
-				for j := 0; j < self.shape[1]; j++ {
-					str = append(str, strconv.FormatFloat(self.Get(i, j), 'f', -1, 32))
-				}
-				dataStr = append(dataStr, "["+strings.Join(str, ", ")+"]")
-			}
-			finalStr = "[" + strings.Join(dataStr, ",\n") + "]"
-		}
-	case 1:
-		{
-			lineEles := make([]string, 0, self.shape[0])
-			for i := 0; i < self.shape[0]; i++ {
-				lineEles = append(lineEles, strconv.FormatFloat(self.Get(i), 'f', -1, 32))
-			}
-			finalStr = "[" + strings.Join(lineEles, ", ") + "]"
-		}
-	default:
-		{
-			panic("Shape length error.")
-		}
-	}
-
-	return fmt.Sprintf("(%v)\n%v", self.shape, finalStr)
 }
 
 func (self *NdArray) Rows() int {
@@ -751,4 +698,63 @@ func (self *NdArray) IsEmpty() bool {
 
 func (self *NdArray) NDims() int {
 	return len(self.shape)
+}
+
+func (self *NdArray) startPosOfIx(poses []int) int {
+	pos := 0
+	for i := 0; i < len(poses); i++ {
+		pos += poses[i] * ProductOfIntSlice(self.shape[i+1:len(self.shape)])
+	}
+	return pos
+}
+
+func (self *NdArray) Ix(poses ...int) *NdArray {
+	if len(poses) == len(self.shape) {
+		pos := self.startPosOfIx(poses)
+		return &NdArray{
+			shape: []int{1},
+			data:  []float64{self.data[pos]},
+		}
+	}
+
+	if len(poses) <= len(self.shape) {
+		newShape := make([]int, len(self.shape)-len(poses))
+		copy(newShape, self.shape[len(poses):len(self.shape)])
+		pos := self.startPosOfIx(poses)
+		data := make([]float64, ProductOfIntSlice(self.shape[len(poses):len(self.shape)]))
+		copy(data, self.data[pos:pos+ProductOfIntSlice(self.shape[len(poses):len(self.shape)])])
+		return &NdArray{
+			shape: newShape,
+			data:  data,
+		}
+	}
+
+	panic("shape error")
+}
+
+func (self *NdArray) makeStr() string {
+	if self.NDims() == 1 {
+		lineEles := make([]string, 0, self.shape[0])
+		for i := 0; i < self.shape[0]; i++ {
+			lineEles = append(lineEles, strconv.FormatFloat(self.data[i], 'f', -1, 32))
+		}
+		return "[" + strings.Join(lineEles, ", ") + "]"
+	} else {
+		eles := make([]string, self.shape[0])
+		for i := 0; i < self.shape[0]; i++ {
+			eles[i] = self.Ix(i).makeStr()
+		}
+		return "[" + strings.Join(eles, ", \n") + "]"
+	}
+}
+
+func (self *NdArray) String() string {
+	return fmt.Sprintf("ndarray<%v>\n(%v)", self.shape, self.makeStr())
+}
+
+func (self *NdArray) Value() float64 {
+	if self.IsEmpty() {
+		panic("empty ndarray")
+	}
+	return self.data[0]
 }

@@ -590,3 +590,57 @@ func TestNdims(t *testing.T) {
 		t.Error("Expected 0, got ", a.NDims())
 	}
 }
+
+func TestNdarrayIx(t *testing.T) {
+	a := Arange(8).Reshape(4, 2)
+	b := a.Ix(3, 1)
+
+	if !b.Equals(Array(7)) {
+		t.Error("Expected [7], got ", b)
+	}
+
+	c := a.Ix(1)
+
+	if !c.Equals(Array(2, 3)) {
+		t.Error("Expected [2,3], got ", c)
+	}
+
+	a = a.Reshape(2, 2, 2)
+	d := a.Ix(1, 1)
+
+	if !d.Equals(Array(6, 7)) {
+		t.Error("Expected [6,7], got ", d)
+	}
+
+	e := a.Ix(1)
+
+	if !e.Equals(Array(4, 5, 6, 7).Reshape(2, 2)) {
+		t.Error("Expected [[4,5], [6,7]], got ", e)
+	}
+
+	defer func() {
+		p := recover()
+		if p != "shape error" {
+			t.Error("Expected 'shape error', got ", p)
+		}
+	}()
+	a.Ix(4, 5, 6, 3)
+}
+
+func TestNdArrayString(t *testing.T) {
+	a := Arange(8).Reshape(2, 2, 2)
+	b := a.Ix(0, 0).String()
+
+	if b != fmt.Sprintf("ndarray<[2]>\n([0, 1])") {
+		t.Error("Expected ndarray<[2]>\n([0, 1]), got", b)
+	}
+}
+
+func TestNdarrayValue(t *testing.T) {
+	a := Arange(8).Reshape(2, 4)
+	b := a.Ix(0, 0).Value()
+
+	if b != 0 {
+		t.Error("Expected 0, got ", b)
+	}
+}
