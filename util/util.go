@@ -1,4 +1,4 @@
-package nd
+package util
 
 import (
 	"math"

@@ -3,6 +3,8 @@ package nd
 import (
 	"fmt"
 	"testing"
+
+	"github.com/ledao/ndarray/util"
 )
 
 func TestNdZeros(t *testing.T) {
@@ -44,29 +46,14 @@ func TestNdEmpty(t *testing.T) {
 	}
 }
 
-func TestNdPosInData(t *testing.T) {
-	arr := Zeros(2, 3, 2, 2)
-
-	if arr.posInData([]int{1, 1, 0, 0}) != 4 {
-		t.Error("Expected 3, got ", arr.posInData([]int{1, 1, 0, 0}))
-	}
-
-	if arr.posInData([]int{1, 1, 1, 0}) != 10 {
-		t.Error("Expected 9, got ", arr.posInData([]int{1, 1, 1, 0}))
-	}
-
-	if arr.posInData([]int{1, 1, 1, 1}) != 22 {
-		t.Error("Expected 21, got ", arr.posInData([]int{1, 1, 1, 1}))
-	}
-}
-
 func TestNdGet(t *testing.T) {
 	arr := Array([]float64{1, 2, 3, 4, 5, 6, 7, 8}...).Reshape(1, 4, 2)
-	if arr.Get(0, 1, 1) != 6 {
-		t.Error("Expected 6, got ", arr.Get(0, 1, 1))
+
+	if arr.Get(0, 1, 1) != 4 {
+		t.Error("Expected 4, got ", arr.Get(0, 1, 1))
 	}
-	if arr.Get(0, 1, 0) != 2 {
-		t.Error("Expected 2, got ", arr.Get(0, 1, 0))
+	if arr.Get(0, 1, 0) != 3 {
+		t.Error("Expected 3, got ", arr.Get(0, 1, 0))
 	}
 }
 
@@ -130,7 +117,7 @@ func TestNdReshapeUnsafe(t *testing.T) {
 		t.Error("Expected 1, got ", narr.shape[0])
 	}
 
-	if !EqualOfFloat64Slice(narr.data, []float64{1, 2, 3, 0}) {
+	if !util.EqualOfFloat64Slice(narr.data, []float64{1, 2, 3, 0}) {
 		t.Error("Expected [1,2,3,0], got ", narr.data)
 	}
 
@@ -144,7 +131,7 @@ func TestNdReshapeUnsafe(t *testing.T) {
 		t.Error("Expected 2, got ", narr.shape[0], narr.shape[1])
 	}
 
-	if !EqualOfFloat64Slice(narr.data, []float64{1, 2, 3, 0}) {
+	if !util.EqualOfFloat64Slice(narr.data, []float64{1, 2, 3, 0}) {
 		t.Error("Expected [1,2,3,0], got ", narr.data)
 	}
 
@@ -158,16 +145,9 @@ func TestNdReshapeUnsafe(t *testing.T) {
 		t.Error("Expected 2, got ", narr.shape[0])
 	}
 
-	if !EqualOfFloat64Slice(narr.data, []float64{1, 2}) {
+	if !util.EqualOfFloat64Slice(narr.data, []float64{1, 2}) {
 		t.Error("Expected [1,2], got ", narr.data)
 	}
-}
-
-func TestNdString(t *testing.T) {
-	arr := Array([]float64{1, 2, 3, 4, 5, 6, 7, 8}...)
-	fmt.Println(arr)
-	fmt.Println(arr.Reshape(4, 2))
-	fmt.Println(arr.Reshape(2, 2, 2))
 }
 
 func TestNdSet(t *testing.T) {
@@ -194,6 +174,12 @@ func TestNdShape(t *testing.T) {
 
 	if shape[0] != 3 || shape[1] != 3 {
 		t.Errorf("Expecte 3, 3 , got %v, %v ", shape[0], shape[1])
+	}
+
+	shape[0] = 2
+
+	if arr.shape[0] != 2 {
+		t.Error("Expected 2, got ", arr.shape[0])
 	}
 }
 
@@ -498,7 +484,7 @@ func TestNdPushEles(t *testing.T) {
 		t.Error("Expected 3, got ", a.shape[0])
 	}
 
-	if !EqualOfFloat64Slice(a.data, []float64{1, 2, 3, 4, 5, 6}) {
+	if !util.EqualOfFloat64Slice(a.data, []float64{1, 2, 3, 4, 5, 6}) {
 		t.Error("Expected [1,2,3,4,5,6], got ", a.data)
 	}
 }
@@ -542,7 +528,7 @@ func TestNdValues(t *testing.T) {
 	a := Arange(3)
 	values := a.Values()
 
-	if !EqualOfFloat64Slice(values, a.data) {
+	if !util.EqualOfFloat64Slice(values, a.data) {
 		t.Error("Expected [0,1,2], got ", values)
 	}
 }

@@ -3,6 +3,8 @@ package nd
 import (
 	"math"
 	"sort"
+
+	"github.com/ledao/ndarray/util"
 )
 
 func Exp(A *NdArray) *NdArray {
@@ -38,10 +40,10 @@ func NonZero(A *NdArray) [][]int {
 	}
 
 	if len(A.shape) == 2 {
-		rowIndexs := make([]int, 0, A.Rows())
-		colIndexs := make([]int, 0, A.Cols())
-		for i := 0; i < A.Rows(); i++ {
-			for j := 0; j < A.Cols(); j++ {
+		rowIndexs := make([]int, 0, A.shape[0])
+		colIndexs := make([]int, 0, A.shape[1])
+		for i := 0; i < A.shape[0]; i++ {
+			for j := 0; j < A.shape[1]; j++ {
 				if math.Abs(A.Get(i, j)-0.0) > 1e-5 {
 					rowIndexs = append(rowIndexs, i)
 					colIndexs = append(colIndexs, j)
@@ -58,7 +60,7 @@ func NonZero(A *NdArray) [][]int {
 //Copies values from one array to another.
 //Raises a "src shape != dst shape" panic if the src shape != dst shape.
 func CopyTo(src *NdArray, dst *NdArray) {
-	if !EqualOfIntSlice(src.shape, dst.shape) {
+	if !util.EqualOfIntSlice(src.shape, dst.shape) {
 		panic("src shape != dst shape")
 	}
 	copy(dst.data, src.data)
@@ -96,229 +98,6 @@ func Atleast3D(a *NdArray) *NdArray {
 	}
 }
 
-//if a's shape is [m],
-//    then the mean of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the mean of each row will be returned in a 1darray;
-func Mean(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		sum := 0.0
-		for _, v := range a.data {
-			sum += v
-		}
-		mean := sum / float64(len(a.data))
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{mean},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		means := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			sum := 0.0
-			for j := 0; j < a.Cols(); j++ {
-				sum += a.Get(i, j)
-			}
-			means[i] = sum / float64(a.Cols())
-		}
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  means,
-		}
-	}
-
-	panic("shape error")
-}
-
-//if a's shape is [m],
-//    then the sum of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the sum of each row will be returned in a 1d array;
-func Sum(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		sum := 0.0
-		for _, v := range a.data {
-			sum += v
-		}
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{sum},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		sums := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			sum := 0.0
-			for j := 0; j < a.Cols(); j++ {
-				sum += a.Get(i, j)
-			}
-			sums[i] = sum
-		}
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  sums,
-		}
-	}
-
-	panic("shape error")
-}
-
-//if a's shape is [m],
-//    then the std of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the std of each row will be returned in a 1d array;
-func Std(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		mean := Mean(a).Get(0)
-		sum := 0.0
-		for _, v := range a.data {
-			sum += (v - mean) * (v - mean)
-		}
-		std := math.Sqrt(sum / float64(len(a.data)))
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{std},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		stds := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			mean := Mean(a.NthRow(i)).Get(0)
-			sum := 0.0
-			for j := 0; j < a.Cols(); j++ {
-				sum += (a.Get(i, j) - mean) * (a.Get(i, j) - mean)
-			}
-
-			stds[i] = math.Sqrt(sum / float64(a.Cols()))
-		}
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  stds,
-		}
-	}
-
-	panic("shape error")
-}
-
-//if a's shape is [m],
-//    then the variance of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the variance of each row will be returned in a 1d array;
-func Var(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		mean := Mean(a).Get(0)
-		sum := 0.0
-		for _, v := range a.data {
-			sum += (v - mean) * (v - mean)
-		}
-		std := sum / float64(len(a.data))
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{std},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		stds := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			mean := Mean(a.NthRow(i)).Get(0)
-			sum := 0.0
-			for j := 0; j < a.Cols(); j++ {
-				sum += (a.Get(i, j) - mean) * (a.Get(i, j) - mean)
-			}
-
-			stds[i] = sum / float64(a.Cols())
-		}
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  stds,
-		}
-	}
-
-	panic("shape error")
-}
-
-//if a's shape is [m],
-//    then the max value of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the max value of each row will be returned in a 1d array;
-func Max(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		max := math.Inf(-1)
-		for _, v := range a.data {
-			if v > max {
-				max = v
-			}
-		}
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{max},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		maxs := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			max := math.Inf(-1)
-			for j := 0; j < a.Cols(); j++ {
-				if a.Get(i, j) > max {
-					max = a.Get(i, j)
-				}
-			}
-			maxs[i] = max
-		}
-
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  maxs,
-		}
-	}
-
-	panic("shape error")
-}
-
-//if a's shape is [m],
-//    then the min value of all elements will be returned in a ndarray;
-//if a's shape is [m, n],
-//    then the min value of each row will be returned in a 1d array;
-func Min(a *NdArray) *NdArray {
-	if len(a.shape) == 1 {
-		min := math.Inf(1)
-		for _, v := range a.data {
-			if v < min {
-				min = v
-			}
-		}
-		return &NdArray{
-			shape: []int{1},
-			data:  []float64{min},
-		}
-	}
-
-	if len(a.shape) == 2 {
-		mins := make([]float64, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
-			min := math.Inf(1)
-			for j := 0; j < a.Cols(); j++ {
-				if a.Get(i, j) < min {
-					min = a.Get(i, j)
-				}
-			}
-			mins[i] = min
-		}
-
-		return &NdArray{
-			shape: []int{a.Rows()},
-			data:  mins,
-		}
-	}
-
-	panic("shape error")
-}
-
 //Stack arrays in sequence vertically (rowwise).
 func VStack(nds ...*NdArray) *NdArray {
 	tn := Empty()
@@ -326,21 +105,20 @@ func VStack(nds ...*NdArray) *NdArray {
 	if len(nds) == 0 {
 		return Empty()
 	} else {
-
 		if len(nds[0].shape) == 1 {
-			col = nds[0].Rows()
+			col = nds[0].shape[0]
 		} else {
-			col = nds[0].Cols()
+			col = nds[0].shape[1]
 		}
 		for i := range nds {
 			if len(nds[i].shape) == 1 {
-				if col != nds[i].Rows() {
+				if col != nds[i].shape[0] {
 					panic("shape error")
 				} else {
 					tn.PushEles(nds[i].data...)
 				}
 			} else if len(nds[i].shape) == 2 {
-				if col != nds[i].Cols() {
+				if col != nds[i].shape[1] {
 					panic("shape error")
 				} else {
 					tn.PushEles(nds[i].data...)
@@ -366,17 +144,17 @@ func HStack(nds ...*NdArray) *NdArray {
 			panic("shape error")
 		}
 
-		row = nds[0].Rows()
+		row = nds[0].shape[0]
 
 		for i := range nds {
 			if len(nds[i].shape) == 1 {
-				if row != nds[i].Rows() {
+				if row != nds[i].shape[0] {
 					panic("shape error")
 				} else {
 					tn.PushEles(nds[i].data...)
 				}
 			} else if len(nds[i].shape) == 2 {
-				if row != nds[i].Rows() {
+				if row != nds[i].shape[0] {
 					panic("shape error")
 				} else {
 					tn.PushEles(nds[i].T().data...)
@@ -397,8 +175,8 @@ func Sort(a *NdArray) *NdArray {
 		sort.Float64s(a.data)
 		return a
 	} else if a.NDims() == 2 {
-		for i := 0; i < a.Rows(); i++ {
-			sort.Float64s(a.data[i*a.Cols() : (i+1)*a.Cols()])
+		for i := 0; i < a.shape[0]; i++ {
+			sort.Float64s(a.data[i*a.shape[1] : (i+1)*a.shape[1]])
 		}
 		return a
 	}
@@ -409,12 +187,12 @@ func Sort(a *NdArray) *NdArray {
 //Split an array into multiple sub-arrays horizontally(column-wise).
 func HSplit(a *NdArray) []*NdArray {
 	if a.NDims() == 2 {
-		nds := make([]*NdArray, a.Rows())
+		nds := make([]*NdArray, a.shape[0])
 		for i := range nds {
-			data := make([]float64, a.Cols())
-			copy(data, a.data[i*a.Cols():(i+1)*a.Cols()])
+			data := make([]float64, a.shape[1])
+			copy(data, a.data[i*a.shape[1]:(i+1)*a.shape[1]])
 			nds[i] = &NdArray{
-				shape: []int{a.Cols()},
+				shape: []int{a.shape[1]},
 				data:  data,
 			}
 		}
@@ -428,7 +206,7 @@ func HSplit(a *NdArray) []*NdArray {
 //Split an array into multiple sub-arrays vertically(row-wise).
 func VSplit(a *NdArray) []*NdArray {
 	if a.NDims() == 2 {
-		nds := make([]*NdArray, a.Cols())
+		nds := make([]*NdArray, a.shape[1])
 		for j := range nds {
 			nds[j] = a.NthCol(j)
 		}
@@ -445,7 +223,7 @@ func Tile(a *NdArray, reps ...int) *NdArray {
 	}
 
 	d := len(reps)
-	if All(func() []bool {
+	if util.All(func() []bool {
 		bools := make([]bool, d)
 		for i := range bools {
 			if reps[i] == 1 {
@@ -467,10 +245,10 @@ func Tile(a *NdArray, reps ...int) *NdArray {
 			}
 			return tn.Reshape(a.Size() * reps[0])
 		} else if a.NDims() == 2 {
-			tn := Zeros(a.Rows(), a.Cols()*reps[0])
+			tn := Zeros(a.shape[0], a.shape[1]*reps[0])
 			for r := 0; r < reps[0]; r++ {
-				for i := 0; i < a.Rows(); i++ {
-					for j := 0; j < a.Cols(); j++ {
+				for i := 0; i < a.shape[0]; i++ {
+					for j := 0; j < a.shape[1]; j++ {
 						tn.Set(a.Get(i, j), i, j+r*reps[0])
 					}
 				}
@@ -483,12 +261,12 @@ func Tile(a *NdArray, reps ...int) *NdArray {
 
 	if d == 2 {
 		if a.NDims() == 2 {
-			tn := Zeros(a.Rows()*reps[0], a.Cols()*reps[1])
+			tn := Zeros(a.shape[0]*reps[0], a.shape[1]*reps[1])
 			for ri := 0; ri < reps[0]; ri++ {
 				for rj := 0; rj < reps[1]; rj++ {
-					for i := 0; i < a.Rows(); i++ {
-						for j := 0; j < a.Cols(); j++ {
-							tn.Set(a.Get(i, j), i+ri*a.Rows(), j+rj*a.Cols())
+					for i := 0; i < a.shape[0]; i++ {
+						for j := 0; j < a.shape[1]; j++ {
+							tn.Set(a.Get(i, j), i+ri*a.shape[0], j+rj*a.shape[1])
 						}
 					}
 				}
@@ -541,11 +319,11 @@ func ArgMax(a *NdArray) []int {
 	}
 
 	if a.NDims() == 2 {
-		maxIndexs := make([]int, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
+		maxIndexs := make([]int, a.shape[0])
+		for i := 0; i < a.shape[0]; i++ {
 			maxValue := math.Inf(-1)
 			maxIndex := -1
-			for j := 0; j < a.Cols(); j++ {
+			for j := 0; j < a.shape[1]; j++ {
 				if a.Get(i, j) > maxValue {
 					maxValue = a.Get(i, j)
 					maxIndex = j
@@ -576,11 +354,11 @@ func ArgMin(a *NdArray) []int {
 	}
 
 	if a.NDims() == 2 {
-		minIndexs := make([]int, a.Rows())
-		for i := 0; i < a.Rows(); i++ {
+		minIndexs := make([]int, a.shape[0])
+		for i := 0; i < a.shape[0]; i++ {
 			minValue := math.Inf(1)
 			minIndex := -1
-			for j := 0; j < a.Cols(); j++ {
+			for j := 0; j < a.shape[1]; j++ {
 				if a.Get(i, j) < minValue {
 					minValue = a.Get(i, j)
 					minIndex = j

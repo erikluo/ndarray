@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"testing"
+
+	"github.com/ledao/ndarray/util"
 )
 
 func TestExp(t *testing.T) {
@@ -33,7 +35,7 @@ func TestNonZero(t *testing.T) {
 	if len(index) != 1 {
 		t.Error("Expected 1, got ", len(index))
 	}
-	if !EqualOfIntSlice(index[0], []int{0, 1, 2, 5, 6}) {
+	if !util.EqualOfIntSlice(index[0], []int{0, 1, 2, 5, 6}) {
 		t.Error("Expected [0,1,2,5,6}, got ", index[0])
 	}
 
@@ -44,11 +46,11 @@ func TestNonZero(t *testing.T) {
 		t.Error("Expected 2, got ", len(index))
 	}
 
-	if !EqualOfIntSlice(index[0], []int{0, 0, 0, 1}) {
+	if !util.EqualOfIntSlice(index[0], []int{0, 0, 0, 1}) {
 		t.Error("Expected [0,0,0,1], got ", index[0])
 	}
 
-	if !EqualOfIntSlice(index[1], []int{0, 1, 2, 2}) {
+	if !util.EqualOfIntSlice(index[1], []int{0, 1, 2, 2}) {
 		t.Error("Expected [0,1,2,2], got ", index[1])
 	}
 }
@@ -114,157 +116,6 @@ func TestAtleast3D(t *testing.T) {
 	if !b.Equals(Arange(4).Reshape(2, 2, 1)) {
 		t.Error("Expected [[[0,1],[2,3]]], got ", b)
 	}
-}
-
-func TestMean(t *testing.T) {
-	a := Arange(4)
-	mean := Mean(a).Get(0)
-
-	if mean != 1.5 {
-		t.Error("Expected 1.5, got ", mean)
-	}
-
-	a = Arange(4).Reshape(2, 2)
-	means := Mean(a)
-
-	if !means.Equals(Array(0.5, 2.5)) {
-		t.Error("Expected [0.5, 2.5], got ", means)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-
-	a = Arange(8).Reshape(2, 2, 2)
-	Mean(a)
-}
-
-func TestSum(t *testing.T) {
-	a := Arange(4)
-	sum := Sum(a).Get(0)
-
-	if sum != 6 {
-		t.Error("Expected 6, got ", sum)
-	}
-
-	a = Arange(4).Reshape(2, 2)
-	sums := Sum(a)
-
-	if !sums.Equals(Array(1, 5)) {
-		t.Error("Expected [1, 5], got ", sums)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-	a = Arange(8).Reshape(2, 2, 2)
-	Sum(a)
-}
-
-func TestStd(t *testing.T) {
-	mat := Array(2, 3, 1, 4)
-	std := Std(mat).Get(0)
-
-	if std != 1.118033988749895 {
-		t.Error("expected 1.118033988749895, got ", std)
-	}
-
-	mat = mat.Reshape(2, 2)
-	stds := Std(mat)
-
-	if !stds.Equals(Array(0.5, 1.5)) {
-		t.Error("Expected [0.5, 1.5], got ", stds)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-
-	Std(Arange(8).Reshape(2, 2, 2))
-}
-
-func TestVar(t *testing.T) {
-	mat := Array(2, 3, 1, 4)
-	vars := Var(mat).Get(0)
-
-	if vars != 1.25 {
-		t.Error("expected 1.25, got ", vars)
-	}
-
-	mat = mat.Reshape(2, 2)
-	vars_ := Var(mat)
-
-	if !vars_.Equals(Array(0.25, 2.25)) {
-		t.Error("Expected [0.25, 2.25], got ", vars_)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-
-	Var(Arange(8).Reshape(2, 2, 2))
-}
-
-func TestMax(t *testing.T) {
-	a := Arange(4)
-	max := Max(a).Get(0)
-
-	if max != 3 {
-		t.Error("Expected 3, got ", max)
-	}
-
-	a = Arange(4).Reshape(2, 2)
-	maxs := Max(a)
-
-	if !maxs.Equals(Array(1, 3)) {
-		t.Error("Expected [1,3], got ", maxs)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-
-	Max(Arange(8).Reshape(2, 2, 2))
-}
-
-func TestMin(t *testing.T) {
-	a := Arange(4)
-	min := Min(a).Get(0)
-
-	if min != 0 {
-		t.Error("Expected 0, got ", min)
-	}
-
-	a = Arange(4).Reshape(2, 2)
-	mins := Min(a)
-
-	if !mins.Equals(Array(0, 2)) {
-		t.Error("Expected [0,2], got ", mins)
-	}
-
-	defer func() {
-		p := recover()
-		if p != "shape error" {
-			t.Error("Expected 'shape error', got ", p)
-		}
-	}()
-
-	Min(Arange(8).Reshape(2, 2, 2))
 }
 
 func TestVStack(t *testing.T) {
@@ -422,7 +273,7 @@ func TestUnique(t *testing.T) {
 	a := Array(3, 4, 2, 3, 1, 2, 4, 3, 2)
 	us := Unique(a)
 
-	if !EqualOfFloat64Slice(us, []float64{1, 2, 3, 4}) {
+	if !util.EqualOfFloat64Slice(us, []float64{1, 2, 3, 4}) {
 		t.Error("Expected [1,2,3,4], got ", us)
 	}
 }
@@ -437,7 +288,7 @@ func TestArgMax(t *testing.T) {
 
 	a = Arange(4).Reshape(2, 2)
 	maxIndexs := ArgMax(a)
-	if !EqualOfIntSlice(maxIndexs, []int{1, 1}) {
+	if !util.EqualOfIntSlice(maxIndexs, []int{1, 1}) {
 		t.Error("Expected [1,1], got ", maxIndexs)
 	}
 
@@ -462,7 +313,7 @@ func TestArgMin(t *testing.T) {
 	a = Arange(4).Reshape(2, 2)
 	minIndexs := ArgMin(a)
 
-	if !EqualOfIntSlice(minIndexs, []int{0, 0}) {
+	if !util.EqualOfIntSlice(minIndexs, []int{0, 0}) {
 		t.Error("Expected [0,0], got ", minIndexs)
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/ledao/ndarray/util"
 )
 
 //The same as numpy ndarray
@@ -17,7 +19,7 @@ func Zeros(shape ...int) *NdArray {
 	if len(shape) == 0 {
 		panic(fmt.Errorf("poses length: %v = 0 ", len(shape)))
 	}
-	data := make([]float64, ProductOfIntSlice(shape))
+	data := make([]float64, util.ProductOfIntSlice(shape))
 	return &NdArray{
 		shape: shape,
 		data:  data,
@@ -71,39 +73,31 @@ func Arange(params ...int) *NdArray {
 	var tr []float64
 	switch len(params) {
 	case 1:
-		{
-			tr = make([]float64, params[0])
-			for i := 0; i < params[0]; i++ {
-				tr[i] = float64(i)
-			}
+		tr = make([]float64, params[0])
+		for i := 0; i < params[0]; i++ {
+			tr[i] = float64(i)
 		}
 	case 2:
-		{
-			tr = make([]float64, params[1]-params[0])
-			for i := 0; i < params[1]-params[0]; i++ {
-				tr[i] = float64(params[0] + i)
-			}
+		tr = make([]float64, params[1]-params[0])
+		for i := 0; i < params[1]-params[0]; i++ {
+			tr[i] = float64(params[0] + i)
 		}
 	case 3:
-		{
-			if params[2] > 0 {
-				tr = make([]float64, int(math.Ceil(float64(params[1]-params[0])/float64(params[2]))))
-				for i := 0; i < len(tr); i++ {
-					tr[i] = float64(params[0] + i*params[2])
-				}
-			} else if params[2] < 0 {
-				tr = make([]float64, int(math.Ceil(float64(params[0]-params[1])/float64(-params[2]))))
-				for i := 0; i < len(tr); i++ {
-					tr[i] = float64(params[0] + i*params[2])
-				}
-			} else {
-				panic(fmt.Errorf("params[2] == 0"))
+		if params[2] > 0 {
+			tr = make([]float64, int(math.Ceil(float64(params[1]-params[0])/float64(params[2]))))
+			for i := 0; i < len(tr); i++ {
+				tr[i] = float64(params[0] + i*params[2])
 			}
+		} else if params[2] < 0 {
+			tr = make([]float64, int(math.Ceil(float64(params[0]-params[1])/float64(-params[2]))))
+			for i := 0; i < len(tr); i++ {
+				tr[i] = float64(params[0] + i*params[2])
+			}
+		} else {
+			panic(fmt.Errorf("params[2] == 0"))
 		}
 	default:
-		{
-			panic(fmt.Errorf("you can only put there parameters."))
-		}
+		panic(fmt.Errorf("you can only put there parameters."))
 	}
 
 	return &NdArray{
@@ -115,11 +109,10 @@ func Arange(params ...int) *NdArray {
 //没有重新分配新的数据空间，新的NdArray指向同样的data.
 //判断self的data的个数是否与newShape的个数相同，如果不同，则抛出异常
 func (self *NdArray) Reshape(newShape ...int) *NdArray {
-	if len(self.data) != ProductOfIntSlice(newShape) {
-		panic(fmt.Errorf("New shape length: %v != original shape length: %v ", ProductOfIntSlice(newShape), ProductOfIntSlice(self.shape)))
+	if len(self.data) != util.ProductOfIntSlice(newShape) {
+		panic(fmt.Errorf("New shape length: %v != original shape length: %v ", util.ProductOfIntSlice(newShape), util.ProductOfIntSlice(self.shape)))
 	}
-	//    newData := make([]float64, len(self.data))
-	//    copy(newData, self.data)
+
 	return &NdArray{
 		shape: newShape,
 		data:  self.data,
@@ -130,13 +123,13 @@ func (self *NdArray) Reshape(newShape ...int) *NdArray {
 //判断self的data的个数是否与newShape的个数相同，如果不同，则会
 //根据newShape的大小决定是否对self.data进行截断，或者在末尾补0.
 func (self *NdArray) ReshapeUnsafe(newShape ...int) *NdArray {
-	if len(self.data) >= ProductOfIntSlice(newShape) {
+	if len(self.data) >= util.ProductOfIntSlice(newShape) {
 		return &NdArray{
 			shape: newShape,
-			data:  self.data[0:ProductOfIntSlice(newShape)],
+			data:  self.data[0:util.ProductOfIntSlice(newShape)],
 		}
 	} else {
-		newData := make([]float64, ProductOfIntSlice(newShape))
+		newData := make([]float64, util.ProductOfIntSlice(newShape))
 		copy(newData, self.data)
 		return &NdArray{
 			shape: newShape,
@@ -145,62 +138,21 @@ func (self *NdArray) ReshapeUnsafe(newShape ...int) *NdArray {
 	}
 }
 
-func (self *NdArray) posInData(poses []int) int {
-	if len(poses) == 0 {
-		panic(fmt.Errorf("poses length = 0"))
-	} else if len(poses) == 1 {
-		return poses[0]
-	} else if len(poses) == 2 {
-		return poses[0]*self.shape[1] + poses[1]
-	} else if len(poses) == 3 {
-		return poses[0]*self.shape[1] + poses[1] + poses[2]*self.shape[1]*self.shape[0]
-	} else {
-		pos := poses[0]*self.shape[1] + poses[1] + poses[2]*self.shape[1]*self.shape[0]
-		for i := 3; i < len(poses); i++ {
-			massLength := 1
-			for j := 0; j < i; j++ {
-				massLength *= self.shape[j]
-			}
-			pos += poses[i] * massLength
-		}
-		return pos
-	}
-}
-
 func (self *NdArray) Get(poses ...int) float64 {
-	//    if len(self.shape) != len(poses) {
-	//        panic(fmt.Errorf("poses shape wrong. Need: %v, got %v ", self.shape, poses))
-	//    }
-	return self.data[self.posInData(poses)]
+	return self.Ix(poses...).Value()
 }
 
 func (self *NdArray) Set(v float64, poses ...int) {
-	//    if len(self.shape) != len(poses) {
-	//        panic(fmt.Errorf("poses shape wrong. Need: %v, got %v ", self.shape, poses))
-	//    }
-	self.data[self.posInData(poses)] = v
-}
-
-func (self *NdArray) Rows() int {
-	return self.shape[0]
-}
-
-func (self *NdArray) Cols() int {
-	return self.shape[1]
-}
-
-func (self *NdArray) Depths() int {
-	return self.shape[2]
+	pos := self.startPosOfIx(poses)
+	self.data[pos] = v
 }
 
 func (self *NdArray) SumOfAll() float64 {
-	return SumOfFloat64Slice(self.data)
+	return util.SumOfFloat64Slice(self.data)
 }
 
 func (self *NdArray) Shape() []int {
-	shape := make([]int, len(self.shape))
-	copy(shape, self.shape)
-	return shape
+	return self.shape
 }
 
 func (self *NdArray) T() *NdArray {
@@ -209,8 +161,8 @@ func (self *NdArray) T() *NdArray {
 	}
 
 	tn := Zeros(self.shape[1], self.shape[0])
-	for i := 0; i < self.Rows(); i++ {
-		for j := 0; j < self.Cols(); j++ {
+	for i := 0; i < self.shape[0]; i++ {
+		for j := 0; j < self.shape[1]; j++ {
 			tn.Set(self.Get(i, j), j, i)
 		}
 	}
@@ -243,7 +195,7 @@ func (self *NdArray) Clone() *NdArray {
 }
 
 func (self *NdArray) MulBit(that *NdArray) *NdArray {
-	if !EqualOfIntSlice(self.shape, that.shape) {
+	if !util.EqualOfIntSlice(self.shape, that.shape) {
 		panic(fmt.Errorf("shape doesn't equals"))
 	}
 	tn := Zeros(self.shape...)
@@ -255,8 +207,8 @@ func (self *NdArray) MulBit(that *NdArray) *NdArray {
 }
 
 func (self *NdArray) NthRow(i int) *NdArray {
-	tn := Zeros(self.Cols())
-	for j := 0; j < self.Cols(); j++ {
+	tn := Zeros(self.shape[1])
+	for j := 0; j < self.shape[1]; j++ {
 		tn.Set(self.Get(i, j), j)
 	}
 
@@ -264,8 +216,8 @@ func (self *NdArray) NthRow(i int) *NdArray {
 }
 
 func (self *NdArray) NthCol(j int) *NdArray {
-	tn := Zeros(self.Rows())
-	for i := 0; i < self.Rows(); i++ {
+	tn := Zeros(self.shape[0])
+	for i := 0; i < self.shape[0]; i++ {
 		tn.Set(self.Get(i, j), i)
 	}
 
@@ -274,10 +226,10 @@ func (self *NdArray) NthCol(j int) *NdArray {
 
 func (self *NdArray) Dot(that *NdArray) *NdArray {
 	//[m n] * [n h]
-	if len(self.shape) == 2 && len(that.shape) == 2 && self.Cols() == that.Rows() {
-		tn := Zeros(self.Rows(), that.Cols())
-		for i := 0; i < self.Rows(); i++ {
-			for j := 0; j < that.Cols(); j++ {
+	if len(self.shape) == 2 && len(that.shape) == 2 && self.shape[1] == that.shape[0] {
+		tn := Zeros(self.shape[0], that.shape[1])
+		for i := 0; i < self.shape[0]; i++ {
+			for j := 0; j < that.shape[1]; j++ {
 				sum := self.NthRow(i).Dot(that.NthCol(j))
 				tn.Set(sum.Get(0), i, j)
 			}
@@ -287,9 +239,9 @@ func (self *NdArray) Dot(that *NdArray) *NdArray {
 	}
 
 	// 1 [m] * [m n]
-	if len(self.shape) == 1 && len(that.shape) == 2 && self.Rows() == that.Rows() {
-		tn := Zeros(1, that.Cols())
-		for j := 0; j < that.Cols(); j++ {
+	if len(self.shape) == 1 && len(that.shape) == 2 && self.shape[0] == that.shape[0] {
+		tn := Zeros(1, that.shape[1])
+		for j := 0; j < that.shape[1]; j++ {
 			sum := self.Dot(that.NthCol(j))
 			tn.Set(sum.Get(0), 0, j)
 		}
@@ -298,9 +250,9 @@ func (self *NdArray) Dot(that *NdArray) *NdArray {
 	}
 
 	//[m n] * [n] 1
-	if len(that.shape) == 1 && len(self.shape) == 2 && self.Cols() == that.shape[0] {
-		tn := Zeros(self.Rows(), 1)
-		for i := 0; i < self.Rows(); i++ {
+	if len(that.shape) == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[0] {
+		tn := Zeros(self.shape[0], 1)
+		for i := 0; i < self.shape[0]; i++ {
 			sum := self.NthRow(i).Dot(that)
 			tn.Set(sum.Get(0), i, 0)
 		}
@@ -309,7 +261,7 @@ func (self *NdArray) Dot(that *NdArray) *NdArray {
 	}
 
 	//[m] * [m]
-	if len(self.shape) == 1 && len(that.shape) == 1 && EqualOfIntSlice(self.shape, that.shape) {
+	if len(self.shape) == 1 && len(that.shape) == 1 && util.EqualOfIntSlice(self.shape, that.shape) {
 		return &NdArray{
 			shape: []int{1},
 			data:  []float64{self.Mul(that).SumOfAll()},
@@ -322,11 +274,11 @@ func (self *NdArray) Dot(that *NdArray) *NdArray {
 func (self *NdArray) Inv() *NdArray {
 	if len(self.shape) != 2 {
 		panic(fmt.Errorf("Only matrix support Transpose"))
-	} else if self.Rows() != self.Cols() {
+	} else if self.shape[0] != self.shape[1] {
 		panic(fmt.Sprintf("rows does not equal to cols"))
 	}
 	a := self.Clone()
-	n := a.Cols()
+	n := a.shape[1]
 	var d float64
 	for k := 0; k < n; k++ {
 		d = 1.0 / a.Get(k, k)
@@ -361,10 +313,10 @@ func (self *NdArray) Inv() *NdArray {
 
 // Calculates the determinant of the matrix
 func (self *NdArray) Det() float64 {
-	if len(self.shape) != 2 || self.Rows() != self.Cols() {
+	if len(self.shape) != 2 || self.shape[0] != self.shape[1] {
 		panic(fmt.Errorf("shape error"))
 	}
-	matrixLength := self.Rows()
+	matrixLength := self.shape[0]
 	sums := make([]float64, matrixLength*2)
 	for ii := 0; ii < len(sums); ii++ {
 		sums[ii] = 1
@@ -415,7 +367,7 @@ type poseValue struct {
 //if self's shape is [m, n] and that's shape is [1, n]，then the elements in jth col of self will be added by the jth element of that;
 func (self *NdArray) Add(that *NdArray) *NdArray {
 	//equal shape, bit wise addition
-	if EqualOfIntSlice(self.shape, that.shape) {
+	if util.EqualOfIntSlice(self.shape, that.shape) {
 		tn := Zeros(self.shape...)
 		for i := range tn.data {
 			tn.data[i] = self.data[i] + that.data[i]
@@ -425,7 +377,7 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 	}
 
 	//that's size is 1, scale addition
-	if ProductOfIntSlice(that.shape) == 1 {
+	if util.ProductOfIntSlice(that.shape) == 1 {
 		tn := self.Clone()
 		for i := range tn.data {
 			tn.data[i] = tn.data[i] + that.Get(0)
@@ -437,8 +389,8 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 	// self' shape [m, n], that's shape [m, 1]
 	if len(that.shape) == 2 && that.shape[1] == 1 && len(self.shape) == 2 && self.shape[0] == that.shape[0] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
 				tn.Set(self.Get(i, j)+that.Get(i), i, j)
 			}
 		}
@@ -449,9 +401,9 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 	// self's shape [m, n], that's shape [1, n]
 	if len(that.shape) == 2 && that.shape[0] == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[1] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
-				tn.Set(self.Get(i, j)+that.Get(j), i, j)
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
+				tn.Set(self.Get(i, j)+that.Get(0, j), i, j)
 			}
 		}
 
@@ -466,7 +418,7 @@ func (self *NdArray) Add(that *NdArray) *NdArray {
 //如果that是行向量(shape为[1, n]), 则self中的第j列每个元素减去that第j个元素的值。
 //如果that数据个数为1，则该值被self的所有值减去，返回与self一样大小的nd.
 func (self *NdArray) Sub(that *NdArray) *NdArray {
-	if EqualOfIntSlice(self.shape, that.shape) {
+	if util.EqualOfIntSlice(self.shape, that.shape) {
 		tn := Zeros(self.shape...)
 		for i := range tn.data {
 			tn.data[i] = self.data[i] - that.data[i]
@@ -477,8 +429,8 @@ func (self *NdArray) Sub(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[1] == 1 && len(self.shape) == 2 && self.shape[0] == that.shape[0] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
 				tn.Set(self.Get(i, j)-that.Get(i), i, j)
 			}
 		}
@@ -488,16 +440,16 @@ func (self *NdArray) Sub(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[0] == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[1] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
-				tn.Set(self.Get(i, j)-that.Get(j), i, j)
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
+				tn.Set(self.Get(i, j)-that.Get(0, j), i, j)
 			}
 		}
 
 		return tn
 	}
 
-	if ProductOfIntSlice(that.shape) == 1 {
+	if util.ProductOfIntSlice(that.shape) == 1 {
 		tn := self.Clone()
 		for i := range tn.data {
 			tn.data[i] = tn.data[i] - that.Get(0)
@@ -514,7 +466,7 @@ func (self *NdArray) Sub(that *NdArray) *NdArray {
 //如果that是行向量(shape为[1, n]), 则self中的第j列每个元素乘以that第j个元素的值。
 //如果that数据个数为1，则该值被self的所有值乘，返回与self一样大小的nd.
 func (self *NdArray) Mul(that *NdArray) *NdArray {
-	if EqualOfIntSlice(self.shape, that.shape) {
+	if util.EqualOfIntSlice(self.shape, that.shape) {
 		tn := Zeros(self.shape...)
 		for i := range tn.data {
 			tn.data[i] = self.data[i] * that.data[i]
@@ -525,8 +477,8 @@ func (self *NdArray) Mul(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[1] == 1 && len(self.shape) == 2 && self.shape[0] == that.shape[0] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
 				tn.Set(self.Get(i, j)*that.Get(i), i, j)
 			}
 		}
@@ -536,16 +488,16 @@ func (self *NdArray) Mul(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[0] == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[1] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
-				tn.Set(self.Get(i, j)*that.Get(j), i, j)
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
+				tn.Set(self.Get(i, j)*that.Get(0, j), i, j)
 			}
 		}
 
 		return tn
 	}
 
-	if ProductOfIntSlice(that.shape) == 1 {
+	if util.ProductOfIntSlice(that.shape) == 1 {
 		tn := self.Clone()
 		for i := range tn.data {
 			tn.data[i] = tn.data[i] * that.Get(0)
@@ -562,7 +514,7 @@ func (self *NdArray) Mul(that *NdArray) *NdArray {
 //如果that是行向量(shape为[1, n]), 则self中的第j列每个元素乘以that第j个元素的值。
 //如果that数据个数为1，则该值被self的所有值乘，返回与self一样大小的nd.
 func (self *NdArray) Div(that *NdArray) *NdArray {
-	if EqualOfIntSlice(self.shape, that.shape) {
+	if util.EqualOfIntSlice(self.shape, that.shape) {
 		tn := Zeros(self.shape...)
 		for i := range tn.data {
 			tn.data[i] = self.data[i] / that.data[i]
@@ -573,8 +525,8 @@ func (self *NdArray) Div(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[1] == 1 && len(self.shape) == 2 && self.shape[0] == that.shape[0] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
 				tn.Set(self.Get(i, j)/that.Get(i), i, j)
 			}
 		}
@@ -584,16 +536,16 @@ func (self *NdArray) Div(that *NdArray) *NdArray {
 
 	if len(that.shape) == 2 && that.shape[0] == 1 && len(self.shape) == 2 && self.shape[1] == that.shape[1] {
 		tn := Zeros(self.shape...)
-		for i := 0; i < tn.Rows(); i++ {
-			for j := 0; j < tn.Cols(); j++ {
-				tn.Set(self.Get(i, j)/that.Get(j), i, j)
+		for i := 0; i < tn.shape[0]; i++ {
+			for j := 0; j < tn.shape[1]; j++ {
+				tn.Set(self.Get(i, j)/that.Get(0, j), i, j)
 			}
 		}
 
 		return tn
 	}
 
-	if ProductOfIntSlice(that.shape) == 1 {
+	if util.ProductOfIntSlice(that.shape) == 1 {
 		tn := self.Clone()
 		for i := range tn.data {
 			tn.data[i] = tn.data[i] / that.Get(0)
@@ -606,8 +558,8 @@ func (self *NdArray) Div(that *NdArray) *NdArray {
 }
 
 func (self *NdArray) SetRow(row *NdArray, i int) *NdArray {
-	if len(self.shape) == 2 && len(row.data) == self.Cols() {
-		for j := 0; j < self.Cols(); j++ {
+	if len(self.shape) == 2 && len(row.data) == self.shape[1] {
+		for j := 0; j < self.shape[1]; j++ {
 			self.Set(row.Get(j), i, j)
 		}
 
@@ -618,8 +570,8 @@ func (self *NdArray) SetRow(row *NdArray, i int) *NdArray {
 }
 
 func (self *NdArray) SetCol(col *NdArray, j int) *NdArray {
-	if len(self.shape) == 2 && len(col.data) == self.Rows() {
-		for i := 0; i < self.Rows(); i++ {
+	if len(self.shape) == 2 && len(col.data) == self.shape[0] {
+		for i := 0; i < self.shape[0]; i++ {
 			self.Set(col.Get(i), i, j)
 		}
 
@@ -653,7 +605,7 @@ func (self *NdArray) GetRows(is ...int) *NdArray {
 		rows.PushEles(self.NthRow(i).data...)
 	}
 
-	return rows.Reshape(len(is), self.Cols())
+	return rows.Reshape(len(is), self.shape[1])
 }
 
 //选出js所指定的列，形成新的NdArray。
@@ -668,7 +620,7 @@ func (self *NdArray) GetCols(js ...int) *NdArray {
 		cols.PushEles(self.NthCol(j).data...)
 	}
 
-	return cols.Reshape(len(js), self.Rows()).T()
+	return cols.Reshape(len(js), self.shape[0]).T()
 }
 
 func (self *NdArray) GetEles(is ...int) *NdArray {
@@ -703,7 +655,7 @@ func (self *NdArray) NDims() int {
 func (self *NdArray) startPosOfIx(poses []int) int {
 	pos := 0
 	for i := 0; i < len(poses); i++ {
-		pos += poses[i] * ProductOfIntSlice(self.shape[i+1:len(self.shape)])
+		pos += poses[i] * util.ProductOfIntSlice(self.shape[i+1:len(self.shape)])
 	}
 	return pos
 }
@@ -721,8 +673,8 @@ func (self *NdArray) Ix(poses ...int) *NdArray {
 		newShape := make([]int, len(self.shape)-len(poses))
 		copy(newShape, self.shape[len(poses):len(self.shape)])
 		pos := self.startPosOfIx(poses)
-		data := make([]float64, ProductOfIntSlice(self.shape[len(poses):len(self.shape)]))
-		copy(data, self.data[pos:pos+ProductOfIntSlice(self.shape[len(poses):len(self.shape)])])
+		data := make([]float64, util.ProductOfIntSlice(self.shape[len(poses):len(self.shape)]))
+		copy(data, self.data[pos:pos+util.ProductOfIntSlice(self.shape[len(poses):len(self.shape)])])
 		return &NdArray{
 			shape: newShape,
 			data:  data,
