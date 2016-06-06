@@ -10,7 +10,7 @@ import (
 
 func TestExp(t *testing.T) {
 	a := Array(1, 2, 3)
-	a_exp := Exp(a)
+	a_exp := a.Exp()
 
 	if !a_exp.Equals(Array(2.7182817, 7.389056, 20.085537)) {
 		t.Error("Expected [2.7182817, 7.389056, 20.085537], got ", a_exp)
@@ -19,7 +19,7 @@ func TestExp(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	a := Array(1, 2, 3)
-	a_map := Map(a, func(e float64) float64 {
+	a_map := a.Map(func(e float64) float64 {
 		return math.Exp(e)
 	})
 
@@ -30,7 +30,7 @@ func TestMap(t *testing.T) {
 
 func TestNonZero(t *testing.T) {
 	a := Array(1, 2, 3, 0, 0, 3, 4)
-	index := NonZero(a)
+	index := a.NonZero()
 
 	if len(index) != 1 {
 		t.Error("Expected 1, got ", len(index))
@@ -40,7 +40,7 @@ func TestNonZero(t *testing.T) {
 	}
 
 	a = Array(1, 2, 3, 0, 0, 3).Reshape(2, 3)
-	index = NonZero(a)
+	index = a.NonZero()
 
 	if len(index) != 2 {
 		t.Error("Expected 2, got ", len(index))
@@ -59,9 +59,9 @@ func TestCopyTo(t *testing.T) {
 	a := Arange(4).Reshape(2, 2)
 	b := Zeros(2, 2)
 
-	CopyTo(a, b)
+	a.CopyTo(b)
 
-	a.Set(10, 0)
+	a.Set(10, 0, 0)
 
 	if !b.Equals(Arange(4).Reshape(2, 2)) {
 		t.Error("Expected [[0,1],[2,3]], got ", b)
@@ -75,13 +75,13 @@ func TestCopyTo(t *testing.T) {
 	}()
 
 	b = Zeros(4)
-	CopyTo(a, b)
+	a.CopyTo(b)
 }
 
 func TestRavel(t *testing.T) {
 	a := Arange(4).Reshape(2, 2)
-	b := Ravel(a)
-	a.Set(10, 0)
+	b := a.Ravel()
+	a.Set(10, 0, 0)
 
 	if !b.Equals(Arange(4)) {
 		t.Error("Expected [0,1,2,3], got ", b)
@@ -90,13 +90,13 @@ func TestRavel(t *testing.T) {
 
 func TestAtleast2D(t *testing.T) {
 	a := Arange(4)
-	b := Atleast2D(a)
+	b := a.Atleast2D()
 
 	if !b.Equals(Arange(4).Reshape(4, 1)) {
 		t.Error("Expected [[0,1,2,3]], got ", b)
 	}
 
-	b = Atleast2D(a.Reshape(2, 2))
+	b = a.Reshape(2, 2).Atleast2D()
 
 	if !b.Equals(Arange(4).Reshape(2, 2)) {
 		t.Error("Expected [[0,1],[2,3]], got ", b)
@@ -105,13 +105,13 @@ func TestAtleast2D(t *testing.T) {
 
 func TestAtleast3D(t *testing.T) {
 	a := Arange(4)
-	b := Atleast3D(a)
+	b := a.Atleast3D()
 
 	if !b.Equals(Arange(4).Reshape(4, 1, 1)) {
 		t.Error("Expected [[[0,1,2,3]]], got ", b)
 	}
 
-	b = Atleast3D(a.Reshape(2, 2))
+	b = a.Reshape(2, 2).Atleast3D()
 
 	if !b.Equals(Arange(4).Reshape(2, 2, 1)) {
 		t.Error("Expected [[[0,1],[2,3]]], got ", b)
@@ -172,14 +172,14 @@ func TestHStack(t *testing.T) {
 func TestSort(t *testing.T) {
 	a := Array(3, 4, 2, 3, 1)
 
-	Sort(a)
+	a.Sort()
 
 	if !a.Equals(Array(1, 2, 3, 3, 4)) {
 		t.Error("Expected [1,2,3,3,4], got ", a)
 	}
 
 	a = Array(3, 4, 5, 1, 3, 2).Reshape(2, 3)
-	Sort(a)
+	a.Sort()
 
 	if !a.Equals(Array(3, 4, 5, 1, 2, 3).Reshape(2, 3)) {
 		t.Error("Expected [[3,4,5], [1,2,3]], got ", a)
@@ -192,13 +192,13 @@ func TestSort(t *testing.T) {
 		}
 	}()
 	a = Arange(8).Reshape(2, 2, 2)
-	Sort(a)
+	a.Sort()
 }
 
 func TestHSplit(t *testing.T) {
 	a := Arange(4).Reshape(2, 2)
 
-	b := HSplit(a)
+	b := a.HSplit()
 
 	if !b[0].Equals(Array(0, 1)) {
 		t.Error("Expected [0, 1], got ", b[0])
@@ -215,12 +215,12 @@ func TestHSplit(t *testing.T) {
 		}
 	}()
 	a = Arange(3)
-	HSplit(a)
+	a.HSplit()
 }
 
 func TestVSplit(t *testing.T) {
 	a := Arange(4).Reshape(2, 2)
-	b := VSplit(a)
+	b := a.VSplit()
 
 	if !b[0].Equals(Array(0, 2)) {
 		t.Error("Expected [0,2], got ", b[0])
@@ -238,31 +238,31 @@ func TestVSplit(t *testing.T) {
 	}()
 
 	a = Array(9)
-	VSplit(a)
+	a.VSplit()
 }
 
 func TestTile(t *testing.T) {
 	a := Arange(3)
-	b := Tile(a, 1, 1, 1, 1)
+	b := a.Tile(1, 1, 1, 1)
 
 	if !b.Equals(Array(0, 1, 2)) {
 		t.Error(fmt.Sprintf("Expected [0,1,2], got "), b)
 	}
 
-	b = Tile(a, 2)
+	b = a.Tile(2)
 
 	if !b.Equals(Array(0, 1, 2, 0, 1, 2)) {
 		t.Error("Expected [0,1,2,0,1,2], got ", b)
 	}
 
 	a = Arange(4).Reshape(2, 2)
-	b = Tile(a, 2)
+	b = a.Tile(2)
 
 	if !b.Equals(Array(0, 1, 0, 1, 2, 3, 2, 3).Reshape(2, 4)) {
 		t.Error("Expected [0,1,0,1,2,3,2,3], got ", b)
 	}
 
-	b = Tile(a, 2, 1)
+	b = a.Tile(2, 1)
 
 	if !b.Equals(Array(0, 1, 2, 3, 0, 1, 2, 3).Reshape(4, 2)) {
 		t.Error("Expected [0,1,0,1,2,3,2,3], got ", b)
@@ -271,7 +271,7 @@ func TestTile(t *testing.T) {
 
 func TestUnique(t *testing.T) {
 	a := Array(3, 4, 2, 3, 1, 2, 4, 3, 2)
-	us := Unique(a)
+	us := a.Unique()
 
 	if !util.EqualOfFloat64Slice(us, []float64{1, 2, 3, 4}) {
 		t.Error("Expected [1,2,3,4], got ", us)
@@ -280,14 +280,14 @@ func TestUnique(t *testing.T) {
 
 func TestArgMax(t *testing.T) {
 	a := Arange(4)
-	maxIndex := ArgMax(a)[0]
+	maxIndex := a.ArgMax()[0]
 
 	if maxIndex != 3 {
 		t.Error("Expected 3, got ", maxIndex)
 	}
 
 	a = Arange(4).Reshape(2, 2)
-	maxIndexs := ArgMax(a)
+	maxIndexs := a.ArgMax()
 	if !util.EqualOfIntSlice(maxIndexs, []int{1, 1}) {
 		t.Error("Expected [1,1], got ", maxIndexs)
 	}
@@ -299,19 +299,19 @@ func TestArgMax(t *testing.T) {
 		}
 	}()
 
-	ArgMax(Empty())
+	Empty().ArgMax()
 }
 
 func TestArgMin(t *testing.T) {
 	a := Arange(3)
-	minIndex := ArgMin(a)[0]
+	minIndex := a.ArgMin()[0]
 
 	if minIndex != 0 {
 		t.Error("Expected 0, got ", minIndex)
 	}
 
 	a = Arange(4).Reshape(2, 2)
-	minIndexs := ArgMin(a)
+	minIndexs := a.ArgMin()
 
 	if !util.EqualOfIntSlice(minIndexs, []int{0, 0}) {
 		t.Error("Expected [0,0], got ", minIndexs)
@@ -321,7 +321,7 @@ func TestArgMin(t *testing.T) {
 func TestExtract(t *testing.T) {
 	a := Array(3, -1, 4, -2)
 
-	es := Extract(a, func(ele float64) bool {
+	es := a.Extract(func(ele float64) bool {
 		if ele > 0 {
 			return true
 		} else {
@@ -336,15 +336,217 @@ func TestExtract(t *testing.T) {
 
 func TestCountNonZero(t *testing.T) {
 	a := Array(0, 9, 3, 2, 0.000000003)
-	count := CountNonZero(a)
+	count := a.CountNonZero()
 
 	if count != 4 {
 		t.Error("Expected 4, got ", count)
 	}
 }
 
-func demo() {
-	a := Array(34)
-	a.Add(Array(2))
-	fmt.Println(a)
+func TestNdSumOfAll(t *testing.T) {
+	arr := Array([]float64{1, 2, 3, 4, 5, 6, 7, 8}...).Reshape(2, 4)
+
+	if arr.SumAll() != 36 {
+		t.Error("Expected 36, got ", arr.SumAll())
+	}
+}
+
+func TestNdMulBit(t *testing.T) {
+	arr := Array(2, 3, 4)
+	a2 := arr.MulBit(arr)
+
+	if !a2.Equals(Array(4, 9, 16)) {
+		t.Error("Expected [4, 9, 16], got %v", a2)
+	}
+}
+
+func TestNdDot(t *testing.T) {
+	a1 := Array(2, 3, 4, 5, 6, 7).Reshape(2, 3)
+	a2 := Array(2, 3, 4, 5, 6, 7).Reshape(3, 2)
+
+	m := a1.Dot(a2)
+
+	if !m.Equals(Array(40, 49, 76, 94).Reshape(2, 2)) {
+		t.Error("Expected [[40,49],[76,94]], got ", m)
+	}
+
+	a := Array(1, 2, 3, 4).Reshape(2, 2)
+	b := Array(2, 3)
+
+	mul := b.Dot(a)
+	if !mul.Reshape(2).Equals(Array(11, 16)) {
+		t.Error("Expected [11,16], got ", mul)
+	}
+
+	mul = a.Dot(b)
+	if !mul.Reshape(2).Equals(Array(8, 18)) {
+		t.Error("Expected [8, 18], got ", mul)
+	}
+
+	a1 = Array(2, 3, 4)
+	a2 = Array(1, 2, 3)
+
+	dot := a1.Dot(a2).Get(0)
+	if dot != 20 {
+		t.Error("Expected 20, got ", dot)
+	}
+}
+
+func TestNdInv(t *testing.T) {
+	arr := Array([]float64{1, 2, 3, 4}...).Reshape(2, 2)
+
+	inv := arr.Inv()
+
+	if inv.Equals(Array(-2, 1, 1.5, -0.5).Reshape(2, 2)) != true {
+		t.Error("Expected [[-2,1],[1.5,-0.5]], got ", inv)
+	}
+}
+
+func TestNdDet(t *testing.T) {
+	arr := Array(1, 2, 3, 4).Reshape(2, 2)
+	det := arr.Det()
+
+	if det != -2.0 {
+		t.Error("Expected -2.0, got ", det)
+	}
+}
+
+func TestNdAdd(t *testing.T) {
+	a1 := Array(1, 2, 3)
+	a2 := Array(2, 3, 4)
+
+	a3 := a1.Add(a2)
+
+	if !a3.Equals(Array(3, 5, 7)) {
+		t.Error("Expected [3,5,7], got ", a3)
+	}
+
+	a2 = Array(3)
+	a3 = a1.Add(a2)
+
+	if !a3.Equals(Array(4, 5, 6)) {
+		t.Error("Expected [3,4,5], got ", a3)
+	}
+
+	a1 = Array(1, 2, 3, 4, 5, 6).Reshape(3, 2)
+	a2 = Array(1, 2, 3).Reshape(3, 1)
+
+	a3 = a1.Add(a2)
+
+	if !a3.Equals(Array(2, 3, 5, 6, 8, 9).Reshape(3, 2)) {
+		t.Error("Expected [[2,3],[5,6],[8,9]], got ", a3)
+	}
+
+	a1 = a1.Reshape(2, 3)
+	a2 = a2.Reshape(1, 3)
+	a3 = a1.Add(a2)
+
+	if !a3.Equals(Array(2, 4, 6, 5, 7, 9).Reshape(2, 3)) {
+		t.Error("Expected [[2,4,6],[5,7,9]], got ", a3)
+	}
+}
+
+func TestNdSub(t *testing.T) {
+	a1 := Array(1, 2, 3)
+	a2 := Array(2, 3, 4)
+
+	a3 := a1.Sub(a2)
+
+	if !a3.Equals(Array(-1, -1, -1)) {
+		t.Error("Expected [-1,-1,-1], got ", a3)
+	}
+
+	a2 = Array(3)
+	a3 = a1.Sub(a2)
+
+	if !a3.Equals(Array(-2, -1, 0)) {
+		t.Error("Expected [-2,-1,0], got ", a3)
+	}
+
+	a1 = Array(1, 2, 3, 4, 5, 6).Reshape(2, 3)
+	a2 = Array(1, 2, 3).Reshape(1, 3)
+	a3 = a1.Sub(a2)
+
+	if !a3.Equals(Array(0, 0, 0, 3, 3, 3).Reshape(2, 3)) {
+		t.Error("Expected [[0,0,0], [3,3,3]], got ", a3)
+	}
+
+	a1 = a1.Reshape(3, 2)
+	a2 = a2.Reshape(3, 1)
+	a3 = a1.Sub(a2)
+
+	if !a3.Equals(Array(0, 1, 1, 2, 2, 3).Reshape(3, 2)) {
+		t.Error("Expected [[0,1],[1,2],[2,3]], got ", a3)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			if err != "shape error" {
+				t.Error("Expected 'Shape error', got ", err)
+			}
+		}
+	}()
+	a2.Sub(a1)
+}
+
+func TestNdMul(t *testing.T) {
+	a1 := Array(1, 2, 3, 4, 5, 6).Reshape(2, 3)
+	a2 := Array(1, 2, 3, 4, 5, 6).Reshape(2, 3)
+	a3 := a1.Mul(a2)
+
+	if !a3.Equals(Array(1, 4, 9, 16, 25, 36).Reshape(2, 3)) {
+		t.Error("Expected [[1,4,9], [16,25,36]], got ", a3)
+	}
+
+	a2 = Array(1, 2, 3).Reshape(1, 3)
+	a3 = a1.Mul(a2)
+
+	if !a3.Equals(Array(1, 4, 9, 4, 10, 18).Reshape(2, 3)) {
+		t.Error("Expected [[1,4,9],[4,10,18]], got ", a3)
+	}
+
+	a2 = Array(1, 2).Reshape(2, 1)
+	a3 = a1.Mul(a2)
+
+	if !a3.Equals(Array(1, 2, 3, 8, 10, 12).Reshape(2, 3)) {
+		t.Error("Expected [[1,2,3], [8,10,12]], got ", a3)
+	}
+
+	a2 = Array(2)
+	a3 = a1.Mul(a2)
+
+	if !a3.Equals(Array(2, 4, 6, 8, 10, 12).Reshape(2, 3)) {
+		t.Error("Expected [[2,4,6],[8,10,12]], got ", a3)
+	}
+}
+
+func TestNdDiv(t *testing.T) {
+	a1 := Array(1, 2, 3, 4, 5, 6).Reshape(2, 3)
+	a2 := Array(1, 2, 3, 4, 5, 6).Reshape(2, 3)
+	a3 := a1.Div(a2)
+
+	if !a3.Equals(Array(1, 1, 1, 1, 1, 1).Reshape(2, 3)) {
+		t.Error("Expected [[1,1,1], [1,1,1]], got ", a3)
+	}
+
+	a2 = Array(1, 2, 3).Reshape(1, 3)
+	a3 = a1.Div(a2)
+
+	if !a3.Equals(Array(1, 1, 1, 4, 2.5, 2).Reshape(2, 3)) {
+		t.Error("Expected [[1,1,1],[4,2.5,2]], got ", a3)
+	}
+
+	a2 = Array(1, 2).Reshape(2, 1)
+	a3 = a1.Div(a2)
+
+	if !a3.Equals(Array(1, 2, 3, 2, 2.5, 3).Reshape(2, 3)) {
+		t.Error("Expected [[1,2,3], [2,2.5,3]], got ", a3)
+	}
+
+	a2 = Array(2)
+	a3 = a1.Div(a2)
+
+	if !a3.Equals(Array(0.5, 1, 1.5, 2, 2.5, 3).Reshape(2, 3)) {
+		t.Error("Expected [[0.5, 1, 1.5],[2, 2.5, 3]], got ", a3)
+	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/ledao/ndarray/util"
 )
 
-func SumOfAll(a *nd.NdArray) float64 {
+func SumAll(a *nd.NdArray) float64 {
 	return util.SumOfFloat64Slice(a.Values())
 }
 

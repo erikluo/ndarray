@@ -6,11 +6,11 @@ import (
 	"github.com/ledao/ndarray/nd"
 )
 
-func TestSumOfAll(t *testing.T) {
+func TestSumAll(t *testing.T) {
 	arr := nd.Array(1, 2, 3, 4, 5, 6, 7, 8).Reshape(2, 4)
 
-	if SumOfAll(arr) != 36 {
-		t.Error("Expected 36, got ", SumOfAll(arr))
+	if SumAll(arr) != 36 {
+		t.Error("Expected 36, got ", SumAll(arr))
 	}
 }
 func TestMean(t *testing.T) {
